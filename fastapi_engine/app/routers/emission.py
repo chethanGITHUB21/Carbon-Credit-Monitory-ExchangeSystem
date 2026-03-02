@@ -73,6 +73,7 @@ _STUBBLE_EF = {"CO2": 5.5700, "CH4": 0.2740, "N2O": 0.006830}
 # ─────────────────────────────────────────────────────────────
 @router.post("/emission/calculate")
 async def calculate_emission(req: EmissionCalculateRequest):
+    
     logger = logging.getLogger("uvicorn.error")
     logger.setLevel(logging.DEBUG)   
     
@@ -181,11 +182,16 @@ async def calculate_seller(req: SellerCalculateRequest):
 # GET /api/v1/dashboard/summary
 # ─────────────────────────────────────────────────────────────
 @router.get("/dashboard/summary")
-async def dashboard_summary(
+async def dashboard_summary(    
     country: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     district: Optional[str] = Query(None),
 ):
+    logger = logging.getLogger("uvicorn.error")
+    logger.setLevel(logging.DEBUG)   
+    
+    logger.debug("DEBUG REQUEST: %s",country,state,district)
+    
     """
     Returns yearly trend data for line graph.
     Aggregated from vw_yearly_trend view (via Node.js DB call in production).
