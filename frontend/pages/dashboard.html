@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard — CarbonX</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="dashboard-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">🌍 CarbonX</div>
+        <a href="/dashboard" class="active">📊 Dashboard</a>
+        <a href="/buyer">📝 Submit Emission</a>
+        <a href="/seller">🌿 My Projects</a>
+        <a href="/marketplace">💹 Marketplace</a>
+        <a
+          href="#"
+          onclick="
+            logout();
+            return false;
+          "
+          style="margin-top: auto"
+          >🚪 Logout</a
+        >
+      </aside>
+
+      <!-- Main -->
+      <main class="main-content">
+        <div class="dash-header">
+          <div>
+            <div class="dash-title">Carbon Dashboard</div>
+            <div style="font-size: 0.85rem; color: var(--muted)">
+              IPCC 2006 + 2019 Refinement | GWP-100 AR5 | Unit: t CO₂e
+            </div>
+          </div>
+          <div id="orgName" style="font-weight: 600; color: var(--muted)"></div>
+        </div>
+
+        <!-- Top Indicators -->
+        <div class="indicators" id="indicators">
+          <div class="indicator green">
+            <div class="indicator-label">🟢 Absorption %</div>
+            <div class="indicator-value" id="absorptionPct">—</div>
+            <div style="font-size: 0.78rem; color: var(--muted)">
+              of total emission
+            </div>
+          </div>
+          <div class="indicator red">
+            <div class="indicator-label">🔴 Emission %</div>
+            <div class="indicator-value" id="emissionPct">—</div>
+            <div style="font-size: 0.78rem; color: var(--muted)">
+              net emitter share
+            </div>
+          </div>
+          <div class="indicator blue">
+            <div class="indicator-label">Total CO₂e</div>
+            <div class="indicator-value" id="totalCo2e">—</div>
+            <div style="font-size: 0.78rem; color: var(--muted)">
+              t CO₂e / year
+            </div>
+          </div>
+          <div class="indicator">
+            <div class="indicator-label">Credits Traded</div>
+            <div class="indicator-value" id="creditsTraded">—</div>
+            <div style="font-size: 0.78rem; color: var(--muted)">all time</div>
+          </div>
+        </div>
+
+        <!-- Region Filters -->
+        <div class="region-filters">
+          <label style="font-weight: 600; font-size: 0.85rem"
+            >Filter by Region:</label
+          >
+          <select id="filterCountry" onchange="onRegionChange()">
+            <option value="">All Countries</option>
+            <option>India</option>
+            <option>China</option>
+            <option>USA</option>
+            <option>Germany</option>
+            <option>Brazil</option>
+          </select>
+          <select id="filterState" onchange="onRegionChange()">
+            <option value="">All States</option>
+          </select>
+          <select id="filterDistrict" onchange="onRegionChange()">
+            <option value="">All Districts</option>
+          </select>
+          <button class="btn btn-primary" onclick="loadDashboard()">
+            Apply
+          </button>
+          <button
+            class="btn btn-outline"
+            style="border-color: var(--border); color: var(--text)"
+            onclick="resetFilters()"
+          >
+            Reset
+          </button>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>
+              📈 Emission vs Credits — Yearly
+              <span style="font-size: 0.75rem; color: var(--muted)"
+                >click for detail</span
+              >
+            </h3>
+            <canvas id="lineChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>
+              📊 Regional CO₂e Breakdown
+              <span style="font-size: 0.75rem; color: var(--muted)"
+                >click for detail</span
+              >
+            </h3>
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Drill-down tables (shown on chart click) -->
+        <div class="data-table-wrap" id="lineTable">
+          <h3>📋 Yearly Emission & Credits Detail</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Credits Generated (t CO₂e)</th>
+                <th>Emission (t CO₂e)</th>
+                <th>Difference</th>
+              </tr>
+            </thead>
+            <tbody id="lineTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="data-table-wrap" id="barTable">
+          <h3>📋 Regional Breakdown Detail</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Region</th>
+                <th>Credits (t CO₂e)</th>
+                <th>Emission (t CO₂e)</th>
+                <th>Emission %</th>
+                <th>Absorption %</th>
+              </tr>
+            </thead>
+            <tbody id="barTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Scientific footer -->
+        <div
+          style="
+            margin-top: 2rem;
+            padding: 1rem;
+            background: var(--card);
+            border-radius: var(--radius);
+            font-size: 0.78rem;
+            color: var(--muted);
+            box-shadow: var(--shadow);
+          "
+        >
+          📚 <strong>Scientific Standards:</strong>
+          IPCC 2006 Guidelines | 2019 Refinement | AR5 GWP-100 (CO₂=1 | CH₄=28 |
+          N₂O=265 | HFC-134a=1300 | SF₆=23500) | All values: t CO₂e | Formula:
+          CO₂e = Σ(gas × GWP) | Absorption%: (Absorption ÷ Emission) × 100
+        </div>
+      </main>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+      // ── Auth guard ──────────────────────────────────────────────
+      if (!requireAuth()) void 0;
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      document.getElementById("orgName").textContent =
+        user.organisation_name || "";
+
+      let lineChart, barChart;
+      let yearlyData = [],
+        regionalData = [];
+
+      // ── Indicators ───────────────────────────────────────────────
+      function updateIndicators(summary) {
+        const ind = summary.top_indicators || {};
+        document.getElementById("absorptionPct").textContent =
+          (ind.absorption_pct || 0).toFixed(1) + "%";
+        document.getElementById("emissionPct").textContent =
+          (ind.emission_pct || 100).toFixed(1) + "%";
+        const yt = summary.yearly_trend || [];
+        const totalCo2e = yt.reduce((a, r) => a + (r.emission_co2e || 0), 0);
+        const totalCred = yt.reduce((a, r) => a + (r.credits_traded || 0), 0);
+        document.getElementById("totalCo2e").textContent =
+          totalCo2e.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+        document.getElementById("creditsTraded").textContent =
+          totalCred.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+      }
+
+      function updateIndicatorsDemo() {
+        document.getElementById("absorptionPct").textContent = "34.2%";
+        document.getElementById("emissionPct").textContent = "65.8%";
+        document.getElementById("totalCo2e").textContent = "1,24,580";
+        document.getElementById("creditsTraded").textContent = "28,400";
+      }
+
+      // ── Demo data (fallback when API offline) ────────────────────
+      function getDemoYearly() {
+        return [2020, 2021, 2022, 2023, 2024].map((y, i) => ({
+          year: y,
+          emission_co2e: 15000 + i * 2800 + Math.random() * 1000,
+          credits_traded: 4000 + i * 1200 + Math.random() * 500,
+          absorption_co2e: 4500 + i * 1400,
+        }));
+      }
+
+      function getDemoRegional() {
+        return [
+          {
+            country: "India",
+            state: "Tamil Nadu",
+            district: "Chennai",
+            total_emission_co2e: 18000,
+            total_absorption_co2e: 6200,
+          },
+          {
+            country: "India",
+            state: "Maharashtra",
+            district: "Mumbai",
+            total_emission_co2e: 24000,
+            total_absorption_co2e: 8000,
+          },
+          {
+            country: "India",
+            state: "Karnataka",
+            district: "Bengaluru",
+            total_emission_co2e: 12000,
+            total_absorption_co2e: 4800,
+          },
+          {
+            country: "India",
+            state: "Delhi",
+            district: "New Delhi",
+            total_emission_co2e: 31000,
+            total_absorption_co2e: 9100,
+          },
+          {
+            country: "India",
+            state: "West Bengal",
+            district: "Kolkata",
+            total_emission_co2e: 16000,
+            total_absorption_co2e: 5400,
+          },
+        ];
+      }
+
+      // ── Line Chart ───────────────────────────────────────────────
+      function renderLineChart(data) {
+        const labels = data.map((d) => d.year);
+        const emission = data.map(
+          (d) => d.emission_co2e || d.total_emission_co2e || 0,
+        );
+        const credits = data.map(
+          (d) => d.credits_traded || d.absorption_co2e || 0,
+        );
+
+        if (lineChart) lineChart.destroy();
+        lineChart = new Chart(document.getElementById("lineChart"), {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "CO₂e Emission (t)",
+                data: emission,
+                borderColor: "#e74c3c",
+                backgroundColor: "rgba(231,76,60,.1)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+              },
+              {
+                label: "Credits Generated (t CO₂e)",
+                data: credits,
+                borderColor: "#2ecc71",
+                backgroundColor: "rgba(46,204,113,.1)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "top" },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) =>
+                    `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString("en-IN", { maximumFractionDigits: 2 })} t CO₂e`,
+                },
+              },
+            },
+            scales: {
+              y: {
+                title: { display: true, text: "t CO₂e" },
+                beginAtZero: true,
+              },
+              x: { title: { display: true, text: "Year" } },
+            },
+            onClick: () => showLineTable(),
+          },
+        });
+      }
+
+      // ── Bar Chart ────────────────────────────────────────────────
+      function renderBarChart(data) {
+        const labels = data.map(
+          (d) => d.district || d.state || d.country || d.region,
+        );
+        const emission = data.map(
+          (d) => d.total_emission_co2e || d.emission || 0,
+        );
+        const credits = data.map(
+          (d) => d.total_absorption_co2e || d.credits || 0,
+        );
+
+        if (barChart) barChart.destroy();
+        barChart = new Chart(document.getElementById("barChart"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Emission (t CO₂e)",
+                data: emission,
+                backgroundColor: "rgba(231,76,60,.75)",
+                borderRadius: 4,
+              },
+              {
+                label: "Carbon Credits (t CO₂e)",
+                data: credits,
+                backgroundColor: "rgba(46,204,113,.75)",
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "top" } },
+            scales: {
+              y: {
+                title: { display: true, text: "t CO₂e" },
+                beginAtZero: true,
+              },
+              x: { title: { display: true, text: "Region" } },
+            },
+            onClick: () => showBarTable(),
+          },
+        });
+      }
+
+      // ── Load Dashboard ───────────────────────────────────────────
+      async function loadDashboard() {
+        const params = {
+          country: document.getElementById("filterCountry").value,
+          state: document.getElementById("filterState").value,
+          district: document.getElementById("filterDistrict").value,
+        };
+        try {
+          const [summary, region] = await Promise.all([
+            api.dashboardSummary(params),
+            api.dashboardRegion(params),
+          ]);
+          let yearlyData = Array.isArray(summary.yearly_trend)
+            ? summary.yearly_trend
+            : getDemoYearly();
+          let regionalData = Array.isArray(region.regions)
+            ? region.regions
+            : getDemoRegional();
+          updateIndicators(summary);
+          renderLineChart(yearlyData);
+          renderBarChart(regionalData);
+        } catch (err) {
+          // Show demo data if API unavailable (dev mode)
+          let yearlyData = getDemoYearly();
+          let regionalData = getDemoRegional();
+          updateIndicatorsDemo();
+          renderLineChart(yearlyData);
+          renderBarChart(regionalData);
+        }
+      }
+
+      // ── Drill-down tables ────────────────────────────────────────
+      function showLineTable() {
+        document.getElementById("barTable").classList.remove("visible");
+        const tbody = document.getElementById("lineTableBody");
+        tbody.innerHTML = yearlyData
+          .map((d) => {
+            const em = d.emission_co2e || d.total_emission_co2e || 0;
+            const cr = d.credits_traded || d.absorption_co2e || 0;
+            const diff = cr - em;
+            return `<tr>
+        <td>${d.year}</td>
+        <td>${cr.toFixed(2)}</td>
+        <td>${em.toFixed(2)}</td>
+        <td style="color:${diff >= 0 ? "var(--green)" : "var(--red)"}">
+          ${diff >= 0 ? "+" : ""}${diff.toFixed(2)}
+        </td>
+      </tr>`;
+          })
+          .join("");
+        document.getElementById("lineTable").classList.add("visible");
+      }
+
+      function showBarTable() {
+        document.getElementById("lineTable").classList.remove("visible");
+        const tbody = document.getElementById("barTableBody");
+        tbody.innerHTML = regionalData
+          .map((d) => {
+            const em = d.total_emission_co2e || d.emission || 0;
+            const abs = d.total_absorption_co2e || d.credits || 0;
+            const emPct = em > 0 ? ((em / (em + abs)) * 100).toFixed(1) : "0.0";
+            const absPct = em > 0 ? ((abs / em) * 100).toFixed(1) : "0.0";
+            const region =
+              d.district || d.state || d.country || d.region || "—";
+            return `<tr>
+        <td>${region}</td>
+        <td>${abs.toFixed(2)}</td>
+        <td>${em.toFixed(2)}</td>
+        <td>${emPct}%</td>
+        <td>${absPct}%</td>
+      </tr>`;
+          })
+          .join("");
+        document.getElementById("barTable").classList.add("visible");
+      }
+
+      // ── Region cascades ──────────────────────────────────────────
+      function onRegionChange() {
+        const country = document.getElementById("filterCountry").value;
+        const stateEl = document.getElementById("filterState");
+        const distEl = document.getElementById("filterDistrict");
+
+        // In production: fetch states from API based on country
+        stateEl.innerHTML = '<option value="">All States</option>';
+        distEl.innerHTML = '<option value="">All Districts</option>';
+
+        if (country === "India") {
+          [
+            "Tamil Nadu",
+            "Maharashtra",
+            "Karnataka",
+            "Delhi",
+            "West Bengal",
+            "Gujarat",
+          ].forEach((s) => {
+            const o = new Option(s, s);
+            stateEl.appendChild(o);
+          });
+        }
+      }
+
+      function resetFilters() {
+        ["filterCountry", "filterState", "filterDistrict"].forEach((id) => {
+          document.getElementById(id).value = "";
+        });
+        loadDashboard();
+      }
+
+      // Init
+      loadDashboard();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Submit Emission — CarbonX</title>
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <a href="/dashboard" class="nav-brand">🌍 CarbonX</a>
+      <div class="nav-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/marketplace">Marketplace</a>
+        <a
+          href="#"
+          onclick="
+            logout();
+            return false;
+          "
+          >Logout</a
+        >
+      </div>
+    </nav>
+
+    <div class="form-page">
+      <h1>📝 Emission Declaration</h1>
+      <p class="page-subtitle">
+        Credit Buyer — IPCC Tier 1 Activity × EF Methodology | GWP-100 AR5
+      </p>
+
+      <div id="alert-box"></div>
+
+      <form id="buyerForm" novalidate>
+        <!-- SECTION A: Organisation Details -->
+        <div class="form-section">
+          <h2>Section A — Organisation Details</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Reporting Year *</label>
+              <select name="reporting_year" required>
+                <option value="">Select year...</option>
+                <script>
+                  for (let y = new Date().getFullYear(); y >= 2015; y--)
+                    document.write(`<option>${y}</option>`);
+                </script>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Industry Type *</label>
+              <select name="industry_type" id="industryType" required>
+                <option value="cement">Cement</option>
+                <option value="textile">Textile</option>
+                <option value="power_plant">Power Plant</option>
+                <option value="steel">Steel</option>
+                <option value="chemical">Chemical</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Manufacturing Scale *</label>
+              <select name="manufacturing_category" required>
+                <option value="heavy">Heavy Scale</option>
+                <option value="medium" selected>Medium Scale</option>
+                <option value="small">Small Scale</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Number of Factories *</label>
+              <input
+                type="number"
+                name="number_of_factories"
+                min="1"
+                value="1"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION B: Scope 1 -->
+        <div class="form-section">
+          <h2>
+            Section B — Scope 1: Direct Emissions
+            <span class="scope-badge">Scope 1</span>
+          </h2>
+          <p
+            style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem"
+          >
+            Stationary combustion: Activity × EF | Sources: IPCC 2006 Vol.2
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fuel Type *</label>
+              <select name="fuel_type" required>
+                <option value="coal">Coal</option>
+                <option value="diesel">Diesel</option>
+                <option value="natural_gas">Natural Gas</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fuel Unit *</label>
+              <select name="fuel_unit" required>
+                <option value="tonnes">Tonnes</option>
+                <option value="litres">Litres</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Fuel Quantity *</label>
+            <input
+              type="number"
+              name="fuel_quantity"
+              min="0"
+              step="0.01"
+              placeholder="e.g. 5000"
+              required
+            />
+            <div class="field-hint">
+              Total fuel consumed per factory per year (in chosen unit)
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION B: Scope 2 -->
+        <div class="form-section">
+          <h2>
+            Section B — Scope 2: Purchased Energy
+            <span class="scope-badge" style="background: #9b59b6">Scope 2</span>
+          </h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Electricity Consumed (kWh/year)</label>
+              <input
+                type="number"
+                name="electricity_kwh"
+                min="0"
+                step="1"
+                placeholder="e.g. 500000"
+              />
+            </div>
+            <div class="form-group">
+              <label>Grid Emission Factor (kg CO₂e/kWh)</label>
+              <input
+                type="number"
+                name="grid_emission_factor"
+                value="0.82"
+                min="0"
+                step="0.001"
+              />
+              <div class="field-hint">
+                Default: 0.82 (India average). Override with your grid's factor.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION B: Scope 3 -->
+        <div class="form-section">
+          <h2>
+            Section B — Scope 3: Indirect Emissions
+            <span class="scope-badge" style="background: #e67e22">Scope 3</span>
+          </h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Transportation Emissions (t CO₂e/year)</label>
+              <input
+                type="number"
+                name="transportation_co2e"
+                min="0"
+                step="0.01"
+                value="0"
+              />
+            </div>
+            <div class="form-group">
+              <label>Waste Generated (t CO₂e/year)</label>
+              <input
+                type="number"
+                name="waste_co2e"
+                min="0"
+                step="0.01"
+                value="0"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION C: Absorption (optional) -->
+        <div class="form-section">
+          <h2>Section C — Absorption Offsets (optional)</h2>
+          <p
+            style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem"
+          >
+            Biological sinks absorb CO₂ only. CO₂e_absorption = CO₂_absorption
+            (GWP_CO₂=1)
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Forest / Plantation Area (m²)</label>
+              <input
+                type="number"
+                name="forest_area_m2"
+                min="0"
+                step="1"
+                value="0"
+              />
+              <div class="field-hint">
+                EF: 12 t CO₂/ha/yr | Source: IPCC 2006 Vol.4
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Number of Trees</label>
+              <input
+                type="number"
+                name="tree_count"
+                min="0"
+                step="1"
+                value="0"
+              />
+              <div class="field-hint">
+                EF: 0.02 t CO₂/tree/yr | Source: FAO/IPCC
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Other Absorption (t CO₂e/year)</label>
+            <input
+              type="number"
+              name="other_absorption_co2e"
+              min="0"
+              step="0.01"
+              value="0"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+          🔬 Calculate CO₂e Emission
+        </button>
+      </form>
+
+      <!-- Results Panel -->
+      <div class="result-panel" id="resultPanel">
+        <h2>📊 IPCC Calculation Results</h2>
+        <p style="opacity: 0.7; font-size: 0.85rem">
+          GWP-100 AR5 | CO₂e = Σ(gas × GWP) | Unit: t CO₂e/year
+        </p>
+        <div class="result-grid">
+          <div class="result-item">
+            <label>Scope 1 CO₂e</label>
+            <div class="value" id="res-scope1">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">t/year</div>
+          </div>
+          <div class="result-item">
+            <label>Scope 2 CO₂e</label>
+            <div class="value" id="res-scope2">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">t/year</div>
+          </div>
+          <div class="result-item">
+            <label>Scope 3 CO₂e</label>
+            <div class="value" id="res-scope3">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">t/year</div>
+          </div>
+          <div class="result-item">
+            <label>Total Emission</label>
+            <div class="value red" id="res-total">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">t CO₂e/year</div>
+          </div>
+          <div class="result-item">
+            <label>Total Absorption</label>
+            <div class="value green" id="res-abs">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">t CO₂/year</div>
+          </div>
+          <div class="result-item">
+            <label>Net Balance</label>
+            <div class="value" id="res-net">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">t CO₂e/year</div>
+          </div>
+          <div class="result-item">
+            <label>Credits Required</label>
+            <div class="value red" id="res-credits">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">
+              t CO₂e offset needed
+            </div>
+          </div>
+          <div class="result-item">
+            <label>Offset Ratio</label>
+            <div class="value" id="res-offset">—</div>
+            <div style="opacity: 0.6; font-size: 0.75rem">
+              absorption ÷ emission × 100
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 1.5rem; opacity: 0.6; font-size: 0.78rem">
+          📚 IPCC 2006 Guidelines | 2019 Refinement | AR5 GWP-100<br />
+          Formula: CO₂e = (CO₂×1)+(CH₄×28)+(N₂O×265)+(HFC-134a×1300)+(SF₆×23500)
+        </div>
+        <div
+          style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap"
+        >
+          <a href="/marketplace" class="btn btn-green"
+            >💹 Browse Carbon Credits</a
+          >
+          <button
+            class="btn btn-outline"
+            style="border-color: rgba(255, 255, 255, 0.4); color: #fff"
+            onclick="
+              document.getElementById('resultPanel').classList.remove('show')
+            "
+          >
+            ← Edit Entry
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+      if (!requireAuth()) void 0;
+
+      document
+        .getElementById("buyerForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const fd = new FormData(this);
+          const d = Object.fromEntries(fd.entries());
+          const btn = document.getElementById("submitBtn");
+          btn.innerHTML = '<span class="spinner"></span> Calculating...';
+          btn.disabled = true;
+
+          const body = {
+            reporting_year: parseInt(d.reporting_year),
+            project_id: "buyer-" + Date.now(),
+            scope1: {
+              fuel_type: d.fuel_type,
+              fuel_unit: d.fuel_unit,
+              fuel_quantity: parseFloat(d.fuel_quantity) || 0,
+              number_of_factories: parseInt(d.number_of_factories) || 1,
+              industry_type: d.industry_type,
+              manufacturing_category: d.manufacturing_category,
+            },
+            scope2: {
+              electricity_kwh: parseFloat(d.electricity_kwh) || 0,
+              grid_emission_factor: parseFloat(d.grid_emission_factor) || 0.82,
+            },
+            scope3: {
+              transportation_co2e: parseFloat(d.transportation_co2e) || 0,
+              waste_co2e: parseFloat(d.waste_co2e) || 0,
+            },
+            forest_area_m2: parseFloat(d.forest_area_m2) || 0,
+            tree_count: parseInt(d.tree_count) || 0,
+            other_absorption_co2e: parseFloat(d.other_absorption_co2e) || 0,
+          };
+
+          try {
+            const res = await api.calculateEmission(body);
+            // Populate results
+            document.getElementById("res-scope1").textContent = (
+              res.scope1_co2e || 0
+            ).toFixed(4);
+            document.getElementById("res-scope2").textContent = (
+              res.scope2_co2e || 0
+            ).toFixed(4);
+            document.getElementById("res-scope3").textContent = (
+              res.scope3_co2e || 0
+            ).toFixed(4);
+            document.getElementById("res-total").textContent = (
+              res.total_emission_co2e || 0
+            ).toFixed(4);
+            document.getElementById("res-abs").textContent = (
+              res.total_absorption_co2e || 0
+            ).toFixed(4);
+            const net = res.net_balance || 0;
+            document.getElementById("res-net").textContent =
+              (net >= 0 ? "+" : "") + net.toFixed(4);
+            document.getElementById("res-net").className =
+              "value " + (net > 0 ? "red" : "green");
+            document.getElementById("res-credits").textContent = (
+              res.credits_required || 0
+            ).toFixed(4);
+            document.getElementById("res-offset").textContent =
+              (res.offset_ratio_percent || 0).toFixed(2) + "%";
+            document.getElementById("resultPanel").classList.add("show");
+            document
+              .getElementById("resultPanel")
+              .scrollIntoView({ behavior: "smooth" });
+            showToast("Calculation complete!", "success");
+          } catch (err) {
+            document.getElementById("alert-box").innerHTML =
+              `<div class="alert alert-error">❌ ${err.message}</div>`;
+            showToast(err.message, "error");
+          }
+          btn.innerHTML = "🔬 Calculate CO₂e Emission";
+          btn.disabled = false;
+        });
+    </script>
+  </body>
+</html>

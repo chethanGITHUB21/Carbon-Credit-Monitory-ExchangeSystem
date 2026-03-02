@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sell Credits — CarbonX</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/dashboard" class="nav-brand">🌍 CarbonX</a>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/marketplace">Marketplace</a>
+    <a href="#" onclick="logout();return false">Logout</a>
+  </div>
+</nav>
+
+<div class="form-page">
+  <h1>🌿 Register Carbon Credit Project</h1>
+  <p class="page-subtitle">Credit Seller — Net Credits = (Annual Reduction − Leakage) × (1 − Buffer%)</p>
+
+  <div id="alert-box"></div>
+
+  <form id="sellerForm" novalidate>
+
+    <!-- Project Details -->
+    <div class="form-section">
+      <h2>Project Details</h2>
+      <div class="form-group">
+        <label>Project Name *</label>
+        <input type="text" name="project_name" placeholder="e.g. Tamil Nadu Reforestation Initiative" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Project Type *</label>
+          <select name="project_type" required>
+            <option value="forestry">Forestry / REDD+</option>
+            <option value="renewable">Renewable Energy</option>
+            <option value="methane">Methane Capture</option>
+            <option value="efficiency">Energy Efficiency</option>
+            <option value="cookstove">Clean Cookstove</option>
+            <option value="soil_carbon">Soil Carbon</option>
+            <option value="blue_carbon">Blue Carbon</option>
+            <option value="dac">Direct Air Capture</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Methodology *</label>
+          <input type="text" name="methodology" placeholder="e.g. VCS VM0007, Gold Standard GS4GG" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Project Boundary</label>
+        <textarea name="project_boundary" rows="3"
+                  placeholder="Describe geographic and operational boundary of the project..."></textarea>
+      </div>
+    </div>
+
+    <!-- Emission Calculations -->
+    <div class="form-section">
+      <h2>Emission Baseline & Reduction (t CO₂e/year)</h2>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">
+        All values expressed in tonnes CO₂e/year. GWP-100 AR5 | IPCC 2006 + 2019 Refinement.
+      </p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Baseline Emission (t CO₂e/yr) *</label>
+          <input type="number" name="baseline_emission" min="0" step="0.01" required
+                 oninput="recalcCredits()" placeholder="0.00">
+          <div class="field-hint">Emissions without the project (business-as-usual)</div>
+        </div>
+        <div class="form-group">
+          <label>Annual Reduction (t CO₂e/yr) *</label>
+          <input type="number" name="annual_reduction" min="0" step="0.01" required
+                 oninput="recalcCredits()" placeholder="0.00">
+          <div class="field-hint">Verified emission reductions attributable to project</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Leakage (t CO₂e/yr)</label>
+          <input type="number" name="leakage" min="0" step="0.01" value="0"
+                 oninput="recalcCredits()">
+          <div class="field-hint">Emission displacement outside project boundary</div>
+        </div>
+        <div class="form-group">
+          <label>Buffer Reserve (%)</label>
+          <input type="number" name="buffer_percent" min="0" max="50" value="10"
+                 oninput="recalcCredits()">
+          <div class="field-hint">Withholding buffer for permanence risk (typically 10–20%)</div>
+        </div>
+      </div>
+
+      <!-- Live credit preview -->
+      <div style="background:var(--bg);border-radius:10px;padding:1.2rem;margin-top:.5rem">
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:.5rem;font-weight:600">
+          LIVE CALCULATION PREVIEW
+        </div>
+        <div style="font-size:.8rem;color:var(--muted);font-family:monospace">
+          Net Credits = (Annual Reduction − Leakage) × (1 − Buffer%/100)
+        </div>
+        <div style="font-size:1.6rem;font-weight:800;color:var(--green);margin-top:.5rem" id="creditPreview">
+          — t CO₂e
+        </div>
+      </div>
+    </div>
+
+    <!-- Vintage & Pricing -->
+    <div class="form-section">
+      <h2>Vintage & Pricing</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vintage Start Year *</label>
+          <input type="number" name="vintage_start" min="2000" max="2100"
+                 value="2024" required>
+        </div>
+        <div class="form-group">
+          <label>Vintage End Year *</label>
+          <input type="number" name="vintage_end" min="2000" max="2100"
+                 value="2034" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Price per Credit (USD / t CO₂e) *</label>
+        <input type="number" name="price_per_credit" min="0.01" step="0.01"
+               placeholder="e.g. 12.50" required>
+        <div class="field-hint">Market rate varies by project type and verification standard.</div>
+      </div>
+    </div>
+
+    <!-- Verification -->
+    <div class="form-section">
+      <h2>Verification</h2>
+      <div class="form-group">
+        <label>Verification Document URL</label>
+        <input type="url" name="verification_doc_url"
+               placeholder="https://registry.example.com/doc/project-123.pdf">
+        <div class="field-hint">Link to VCS, Gold Standard, or other registry certificate</div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-green btn-lg" id="submitBtn">
+      🌿 Register Project & List Credits
+    </button>
+  </form>
+
+  <!-- Result -->
+  <div class="result-panel" id="resultPanel">
+    <h2>✅ Project Registered</h2>
+    <div class="result-grid">
+      <div class="result-item">
+        <label>Baseline Emission</label>
+        <div class="value" id="res-baseline">—</div>
+        <div style="opacity:.6;font-size:.75rem">t CO₂e/yr</div>
+      </div>
+      <div class="result-item">
+        <label>Annual Reduction</label>
+        <div class="value green" id="res-reduction">—</div>
+        <div style="opacity:.6;font-size:.75rem">t CO₂e/yr</div>
+      </div>
+      <div class="result-item">
+        <label>Net Reduction</label>
+        <div class="value" id="res-net-red">—</div>
+        <div style="opacity:.6;font-size:.75rem">after leakage</div>
+      </div>
+      <div class="result-item">
+        <label>Credits Available</label>
+        <div class="value green" id="res-credits">—</div>
+        <div style="opacity:.6;font-size:.75rem">t CO₂e (after buffer)</div>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;opacity:.6;font-size:.78rem">
+      📚 IPCC 2006 Guidelines | 2019 Refinement | GWP-100 AR5<br>
+      Formula: Net Credits = (Annual Reduction − Leakage) × (1 − Buffer%/100)
+    </div>
+    <a href="/marketplace" class="btn btn-green" style="margin-top:1rem">
+      View in Marketplace →
+    </a>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+if (!requireAuth()) void 0;
+
+// Live credit calculator
+function recalcCredits() {
+  const red  = parseFloat(document.querySelector('[name=annual_reduction]').value)  || 0;
+  const leak = parseFloat(document.querySelector('[name=leakage]').value)            || 0;
+  const buf  = parseFloat(document.querySelector('[name=buffer_percent]').value)     || 10;
+  const net  = Math.max(0, (red - leak) * (1 - buf / 100));
+  document.getElementById('creditPreview').textContent = net.toFixed(4) + ' t CO₂e';
+}
+
+document.getElementById('sellerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const fd = new FormData(this);
+  const d  = Object.fromEntries(fd.entries());
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Registering...';
+  btn.disabled = true;
+
+  try {
+    const res = await api.registerSellerProject({
+      project_name: d.project_name,
+      project_type: d.project_type,
+      methodology: d.methodology,
+      baseline_emission: parseFloat(d.baseline_emission),
+      annual_reduction: parseFloat(d.annual_reduction),
+      leakage: parseFloat(d.leakage) || 0,
+      buffer_percent: parseFloat(d.buffer_percent) || 10,
+      price_per_credit: parseFloat(d.price_per_credit),
+      vintage_start: parseInt(d.vintage_start),
+      vintage_end: parseInt(d.vintage_end),
+      project_boundary: d.project_boundary,
+      verification_doc_url: d.verification_doc_url || null,
+    });
+    document.getElementById('res-baseline').textContent  = parseFloat(d.baseline_emission).toFixed(4);
+    document.getElementById('res-reduction').textContent = parseFloat(d.annual_reduction).toFixed(4);
+    document.getElementById('res-net-red').textContent   = (res.net_reduction_co2e || 0).toFixed(4);
+    document.getElementById('res-credits').textContent   = (res.credits_available  || 0).toFixed(4);
+    document.getElementById('resultPanel').classList.add('show');
+    showToast('Project registered successfully!', 'success');
+  } catch(err) {
+    document.getElementById('alert-box').innerHTML =
+      `<div class="alert alert-error">❌ ${err.message}</div>`;
+    showToast(err.message, 'error');
+  }
+  btn.innerHTML = '🌿 Register Project & List Credits';
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

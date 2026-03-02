@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Register — CarbonX</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="nav-brand">🌍 CarbonX</a>
+  <div class="nav-links"><a href="/login" class="btn btn-outline">Login</a></div>
+</nav>
+
+<div class="auth-page">
+<div class="auth-card">
+  <h2>Create Account</h2>
+  <p class="subtitle">IPCC-compliant carbon accounting platform</p>
+
+  <!-- Step indicators -->
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+  </div>
+
+  <div id="alert-box"></div>
+
+  <form id="registerForm" novalidate>
+
+    <!-- STEP 1: Organisation -->
+    <div class="form-step active" id="step1">
+      <div class="form-group">
+        <label>Organisation Type *</label>
+        <select name="organisation_type" id="orgType" required>
+          <option value="">Select type...</option>
+          <option>Manufacturing</option>
+          <option>Energy</option>
+          <option>Agriculture</option>
+          <option>Transportation</option>
+          <option>Healthcare</option>
+          <option>Government</option>
+          <option>NGO / Non-profit</option>
+          <option>Research Institution</option>
+          <option value="__custom__">Other (specify)</option>
+        </select>
+        <span class="error-msg" id="err-orgType">Please select organisation type</span>
+      </div>
+      <div class="form-group" id="customTypeGroup" style="display:none">
+        <label>Specify Organisation Type *</label>
+        <input type="text" name="custom_organisation_type" placeholder="Enter type...">
+      </div>
+      <div class="form-group">
+        <label>Organisation Name *</label>
+        <input type="text" name="organisation_name" placeholder="e.g. Acme Industries Ltd." required>
+        <span class="error-msg" id="err-orgName">Organisation name is required</span>
+      </div>
+      <div class="form-group">
+        <label>Register as *</label>
+        <select name="role" required>
+          <option value="buyer">Credit Buyer (Emitter seeking offsets)</option>
+          <option value="seller">Credit Seller (Project developer)</option>
+          <option value="both">Both Buyer and Seller</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-primary" style="width:100%" onclick="goStep2()">
+        Next →
+      </button>
+    </div>
+
+    <!-- STEP 2: Location + Credentials -->
+    <div class="form-step" id="step2">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Country *</label>
+          <input type="text" name="country" placeholder="e.g. India" required>
+        </div>
+        <div class="form-group">
+          <label>State *</label>
+          <input type="text" name="state" placeholder="e.g. Tamil Nadu" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>District *</label>
+          <input type="text" name="district" placeholder="e.g. Chennai" required>
+        </div>
+        <div class="form-group">
+          <label>Zone <span style="color:var(--muted)">(optional)</span></label>
+          <input type="text" name="zone" placeholder="Zone / Area">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Ward <span style="color:var(--muted)">(optional)</span></label>
+        <input type="text" name="ward" placeholder="Ward number / name">
+      </div>
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" name="email" placeholder="admin@yourorg.com" required>
+        <span class="error-msg" id="err-email">Enter a valid email address</span>
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" name="password" id="passwordInput" placeholder="Min 8 chars, 1 uppercase, 1 number, 1 special" required>
+        <div class="field-hint" id="pwStrength"></div>
+        <span class="error-msg" id="err-pw">Password does not meet requirements</span>
+      </div>
+      <div style="display:flex;gap:.8rem;margin-top:.5rem">
+        <button type="button" class="btn btn-outline" style="border-color:var(--border);color:var(--text);flex:1"
+                onclick="goStep1()">← Back</button>
+        <button type="submit" class="btn btn-primary" style="flex:2" id="submitBtn">
+          Create Account
+        </button>
+      </div>
+    </div>
+
+  </form>
+  <p style="text-align:center;margin-top:1.5rem;font-size:.88rem;color:var(--muted)">
+    Already have an account? <a href="/login">Log in</a>
+  </p>
+</div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+// Show custom type input
+document.getElementById('orgType').addEventListener('change', function() {
+  document.getElementById('customTypeGroup').style.display =
+    this.value === '__custom__' ? 'block' : 'none';
+});
+
+// Password strength indicator
+document.getElementById('passwordInput').addEventListener('input', function() {
+  const pw = this.value;
+  const checks = [
+    pw.length >= 8,
+    /[A-Z]/.test(pw),
+    /[0-9]/.test(pw),
+    /[^A-Za-z0-9]/.test(pw),
+  ];
+  const strength = checks.filter(Boolean).length;
+  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  const colors = ['', 'var(--red)', '#e67e22', '#f1c40f', 'var(--green)'];
+  const el = document.getElementById('pwStrength');
+  el.textContent = pw ? `Strength: ${labels[strength]}` : '';
+  el.style.color = colors[strength];
+});
+
+function goStep2() {
+  const orgType = document.getElementById('orgType').value;
+  if (!orgType) { document.getElementById('err-orgType').classList.add('show'); return; }
+  document.getElementById('err-orgType').classList.remove('show');
+  const orgName = document.querySelector('[name=organisation_name]').value.trim();
+  if (!orgName) { document.getElementById('err-orgName').classList.add('show'); return; }
+  document.getElementById('err-orgName').classList.remove('show');
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('step2').classList.add('active');
+  document.getElementById('dot1').classList.remove('active');
+  document.getElementById('dot2').classList.add('active');
+}
+
+function goStep1() {
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step1').classList.add('active');
+  document.getElementById('dot2').classList.remove('active');
+  document.getElementById('dot1').classList.add('active');
+}
+
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const fd = new FormData(this);
+  const body = Object.fromEntries(fd.entries());
+
+  // Resolve custom org type
+  if (body.organisation_type === '__custom__') {
+    body.organisation_type = body.custom_organisation_type || 'Other';
+  }
+  delete body.custom_organisation_type;
+
+  // Password validation
+  const pw = body.password;
+  if (pw.length < 8 || !/[A-Z]/.test(pw) || !/[0-9]/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
+    document.getElementById('err-pw').classList.add('show');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Creating...';
+  btn.disabled = true;
+
+  try {
+    await api.register(body);
+    document.getElementById('alert-box').innerHTML =
+      '<div class="alert alert-success">✅ Account created! Redirecting to login...</div>';
+    setTimeout(() => window.location.href = '/login', 1800);
+  } catch (err) {
+    document.getElementById('alert-box').innerHTML =
+      `<div class="alert alert-error">❌ ${err.message}</div>`;
+    btn.innerHTML = 'Create Account';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

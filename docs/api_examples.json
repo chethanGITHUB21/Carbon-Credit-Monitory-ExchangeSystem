@@ -1,0 +1,137 @@
+{
+  "POST /api/v1/emission/calculate": {
+    "request": {
+      "project_id": "buyer-1712345678",
+      "scope1": {
+        "fuel_type": "coal",
+        "fuel_unit": "tonnes",
+        "fuel_quantity": 500,
+        "number_of_factories": 3,
+        "industry_type": "cement",
+        "manufacturing_category": "heavy"
+      },
+      "scope2": {
+        "electricity_kwh": 250000,
+        "grid_emission_factor": 0.82
+      },
+      "scope3": {
+        "transportation_co2e": 120.5,
+        "waste_co2e": 45.0
+      },
+      "forest_area_m2": 2000000,
+      "tree_count": 5000,
+      "other_absorption_co2e": 0
+    },
+    "response": {
+      "total_emission_co2e": 3870.55,
+      "total_absorption_co2e": 2500.0,
+      "net_balance": 1370.55,
+      "status": "NET EMITTER",
+      "scope1_co2e": 3629.1,
+      "scope2_co2e": 205.0,
+      "scope3_co2e": 165.5,
+      "credits_required": 1370.55,
+      "offset_ratio_percent": 64.59,
+      "gas_wise_totals": {
+        "CO2": 3595.34,
+        "CH4": 0.18,
+        "N2O": 0.09,
+        "HFC-134a": 0.0,
+        "SF6": 0.0
+      },
+      "sector_breakdown": {
+        "scope1": 3629.1,
+        "scope2": 205.0,
+        "scope3": 165.5
+      },
+      "sink_breakdown": {
+        "forest": 2400.0,
+        "trees": 100.0
+      },
+      "scientific_standard": "IPCC 2006 + 2019 Refinement | GWP-100 AR5"
+    }
+  },
+
+  "POST /api/v1/seller/calculate": {
+    "request": {
+      "baseline_emission": 50000,
+      "annual_reduction": 18000,
+      "leakage": 1800,
+      "buffer_percent": 10
+    },
+    "response": {
+      "baseline_emission_co2e": 50000,
+      "annual_reduction_co2e": 18000,
+      "leakage_co2e": 1800,
+      "buffer_percent": 10,
+      "net_reduction_co2e": 16200,
+      "net_credits_available": 14580,
+      "additionality_co2e": -32000,
+      "formula": "Net Credits = (annual_reduction - leakage) × (1 - buffer%/100)",
+      "scientific_standard": "IPCC 2006 + 2019 Refinement | GWP-100 AR5"
+    }
+  },
+
+  "POST /api/auth/register": {
+    "request": {
+      "organisation_type": "Manufacturing",
+      "organisation_name": "Acme Cement Ltd",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "district": "Chennai",
+      "zone": "North",
+      "ward": "12",
+      "email": "admin@acmecement.com",
+      "password": "SecurePass@123",
+      "role": "buyer"
+    },
+    "response": {
+      "message": "Registration successful. Please log in.",
+      "user": {
+        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "email": "admin@acmecement.com",
+        "organisation_name": "Acme Cement Ltd",
+        "role": "buyer"
+      }
+    }
+  },
+
+  "POST /api/auth/login": {
+    "request": {
+      "email": "admin@acmecement.com",
+      "password": "SecurePass@123"
+    },
+    "response": {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "user": {
+        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "email": "admin@acmecement.com",
+        "role": "buyer",
+        "organisation_name": "Acme Cement Ltd"
+      }
+    }
+  },
+
+  "POST /api/seller/project": {
+    "request": {
+      "project_name": "Tamil Nadu Reforestation Initiative",
+      "project_type": "forestry",
+      "methodology": "VCS VM0007",
+      "baseline_emission": 50000,
+      "annual_reduction": 18000,
+      "leakage": 1800,
+      "buffer_percent": 10,
+      "price_per_credit": 11.50,
+      "vintage_start": 2022,
+      "vintage_end": 2032,
+      "project_boundary": "Districts of Nilgiris and Coimbatore, Tamil Nadu, India"
+    },
+    "response": {
+      "id": "abc12345-...",
+      "project_name": "Tamil Nadu Reforestation Initiative",
+      "credits_available": 14580,
+      "net_credits": 14580,
+      "status": "pending"
+    }
+  }
+}

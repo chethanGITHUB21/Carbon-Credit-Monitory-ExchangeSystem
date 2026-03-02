@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seller Projects — CarbonLedger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0a0f0a;--lime:#a8e63d;--mist:#e8f0e9;--wire:#d0dbd1;--data:#2dd4a0;--alert:#e85d3a;--panel:#111811;--border:rgba(255,255,255,0.1)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Mono',monospace;background:var(--ink);color:var(--mist);min-height:100vh}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--panel);border-right:1px solid var(--border);z-index:20}
+  .sidebar-logo{padding:1.5rem;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--lime);border-bottom:1px solid var(--border)}
+  .sidebar-logo span{color:var(--mist)}
+  .nav-item{display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1.5rem;font-size:0.78rem;color:var(--wire);text-decoration:none;transition:all 0.2s}
+  .nav-item:hover,.nav-item.active{color:var(--lime)}
+  .nav-item.active{border-left:2px solid var(--lime)}
+  .nav-section{padding:0.5rem 1.5rem;font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-top:0.5rem}
+  .main{margin-left:220px;padding:2rem;max-width:820px}
+  h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin-bottom:0.3rem}
+  .page-sub{font-size:0.78rem;color:var(--wire);margin-bottom:2rem}
+  .section{background:var(--panel);border:1px solid var(--border);margin-bottom:1.5rem}
+  .section-header{padding:1rem 1.5rem;border-bottom:1px solid var(--border)}
+  .section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem}
+  .section-sub{font-size:0.7rem;color:var(--wire);margin-top:0.2rem}
+  .section-body{padding:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .field.full{grid-column:1/-1}
+  label{display:block;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--wire);margin-bottom:0.35rem}
+  input,select,textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--mist);padding:0.7rem;font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;transition:border-color 0.2s;appearance:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--lime)}
+  textarea{resize:vertical;min-height:80px}
+  select option{background:#111811}
+  .btn-primary{background:var(--lime);color:var(--ink);border:none;padding:0.9rem 2rem;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;transition:background 0.2s}
+  .btn-primary:hover{background:var(--data)}
+  .result-panel{background:var(--panel);border:1px solid var(--border);padding:1.5rem;margin-top:1.5rem;display:none}
+  .result-panel.show{display:block}
+  .result-title{font-family:'Syne',sans-serif;font-weight:700;margin-bottom:1rem;color:var(--lime)}
+  .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+  .result-cell{background:var(--panel);padding:1rem;text-align:center}
+  .result-num{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--lime)}
+  .result-label{font-size:0.68rem;color:var(--wire);margin-top:0.2rem}
+  .formula{background:rgba(168,230,61,0.06);border:1px solid rgba(168,230,61,0.2);padding:1rem;margin-top:1rem;font-size:0.78rem;color:var(--data)}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">◈ <span>Carbon</span>Ledger</div>
+  <div class="nav-section">Monitor</div>
+  <a href="/dashboard" class="nav-item">◎ Dashboard</a>
+  <a href="/buyer" class="nav-item">⚗️ Emission Report</a>
+  <div class="nav-section">Exchange</div>
+  <a href="/marketplace" class="nav-item">🔄 Marketplace</a>
+  <a href="/seller" class="nav-item active">🌱 Seller Projects</a>
+</aside>
+
+<main class="main">
+  <h1>Register Credit Project</h1>
+  <div class="page-sub">List your carbon offset project for sale on the exchange</div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Project Details</div>
+      <div class="section-sub">Basic project identification and location</div>
+    </div>
+    <div class="section-body">
+      <div class="field full">
+        <label>Project Name</label>
+        <input type="text" id="proj_name" placeholder="e.g. Tamil Nadu Reforestation Initiative">
+      </div>
+      <div class="field">
+        <label>Project Type</label>
+        <select id="proj_type">
+          <option value="reforestation">Reforestation</option>
+          <option value="renewable_energy">Renewable Energy</option>
+          <option value="methane_capture">Methane Capture</option>
+          <option value="blue_carbon">Blue Carbon</option>
+          <option value="energy_efficiency">Energy Efficiency</option>
+          <option value="soil_carbon">Soil Carbon</option>
+          <option value="dac">Direct Air Capture</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Methodology</label>
+        <input type="text" id="methodology" placeholder="e.g. VCS VM0007, Gold Standard">
+      </div>
+      <div class="field">
+        <label>Country</label>
+        <input type="text" id="proj_country" placeholder="India">
+      </div>
+      <div class="field">
+        <label>State</label>
+        <input type="text" id="proj_state" placeholder="Tamil Nadu">
+      </div>
+      <div class="field full">
+        <label>Project Boundary Description</label>
+        <textarea id="proj_boundary" placeholder="Describe the geographical boundary of the project…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Emission Accounting (tCO₂e / year)</div>
+      <div class="section-sub">
+        Formula: Net Credits = (Annual Reduction − Leakage) × (1 − Buffer%)
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Baseline Emission (tCO₂e/yr)</label>
+        <input type="number" id="baseline" placeholder="e.g. 10000" min="0">
+      </div>
+      <div class="field">
+        <label>Annual Reduction (tCO₂e/yr)</label>
+        <input type="number" id="reduction" placeholder="e.g. 8000" min="0" oninput="calcPreview()">
+      </div>
+      <div class="field">
+        <label>Leakage (tCO₂e/yr)</label>
+        <input type="number" id="leakage" value="0" min="0" oninput="calcPreview()">
+      </div>
+      <div class="field">
+        <label>Buffer Reserve (%)</label>
+        <input type="number" id="buffer" value="10" min="0" max="100" oninput="calcPreview()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Exchange Listing</div>
+      <div class="section-sub">Pricing and availability</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Credits Available (tCO₂e)</label>
+        <input type="number" id="credits_avail" placeholder="e.g. 5000" min="0">
+      </div>
+      <div class="field">
+        <label>Price per Credit (USD)</label>
+        <input type="number" id="price" placeholder="e.g. 15.00" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label>Vintage Year</label>
+        <input type="number" id="vintage" value="2024" min="2000" max="2099">
+      </div>
+      <div class="field">
+        <label>Verification Document URL</label>
+        <input type="url" id="doc_url" placeholder="https://…">
+      </div>
+    </div>
+  </div>
+
+  <!-- Live preview -->
+  <div id="previewBox" style="background:rgba(168,230,61,0.06);border:1px solid rgba(168,230,61,0.2);padding:1rem;margin-bottom:1rem;font-size:0.82rem;display:none">
+    <div style="color:var(--data);margin-bottom:0.5rem;font-weight:600">📐 Net Credits Preview</div>
+    <div id="previewCalc" style="font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--lime)"></div>
+    <div id="previewFormula" style="font-size:0.72rem;color:var(--wire);margin-top:0.3rem"></div>
+  </div>
+
+  <button class="btn-primary" onclick="submitSeller()">🌱 Register Project →</button>
+
+  <div class="result-panel" id="resultPanel">
+    <div class="result-title">✅ Project Calculation Summary</div>
+    <div class="result-grid">
+      <div class="result-cell"><div class="result-num" id="r-net">—</div><div class="result-label">Net Credits (tCO₂e/yr)</div></div>
+      <div class="result-cell"><div class="result-num" id="r-baseline">—</div><div class="result-label">Baseline (tCO₂e/yr)</div></div>
+      <div class="result-cell"><div class="result-num" id="r-buffer">—</div><div class="result-label">Buffer Reserve</div></div>
+    </div>
+    <div class="formula">
+      Net Credits = (Annual Reduction − Leakage) × (1 − Buffer%/100)<br>
+      <span id="formula-detail" style="color:var(--lime)"></span>
+    </div>
+  </div>
+</main>
+
+<script>
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+if (!user.id) window.location.href = '/login';
+const token = localStorage.getItem('accessToken');
+
+function calcPreview() {
+  const red = parseFloat(document.getElementById('reduction').value) || 0;
+  const leak = parseFloat(document.getElementById('leakage').value) || 0;
+  const buf  = parseFloat(document.getElementById('buffer').value) || 0;
+  if (!red) { document.getElementById('previewBox').style.display='none'; return; }
+  const net = (red - leak) * (1 - buf/100);
+  document.getElementById('previewBox').style.display='block';
+  document.getElementById('previewCalc').textContent = net.toFixed(2) + ' tCO₂e/yr net credits';
+  document.getElementById('previewFormula').textContent =
+    `(${red} − ${leak}) × (1 − ${buf}%) = ${net.toFixed(2)}`;
+}
+
+async function submitSeller() {
+  const payload = {
+    baseline_emission: parseFloat(document.getElementById('baseline').value) || 0,
+    annual_reduction:  parseFloat(document.getElementById('reduction').value) || 0,
+    leakage:           parseFloat(document.getElementById('leakage').value) || 0,
+    buffer_percent:    parseFloat(document.getElementById('buffer').value) || 0,
+    methodology:       document.getElementById('methodology').value,
+  };
+
+  try {
+    const res = await fetch('/carbon/seller/calculate', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    document.getElementById('r-net').textContent = data.net_credits_co2e?.toFixed(2) || '—';
+    document.getElementById('r-baseline').textContent = data.baseline_emission?.toFixed(2) || '—';
+    document.getElementById('r-buffer').textContent = data.buffer_reserve_co2e?.toFixed(2) || '—';
+    document.getElementById('formula-detail').textContent =
+      `(${payload.annual_reduction} − ${payload.leakage}) × (1 − ${payload.buffer_percent}%) = ${data.net_credits_co2e}`;
+    document.getElementById('resultPanel').classList.add('show');
+    document.getElementById('resultPanel').scrollIntoView({behavior:'smooth'});
+  } catch(e) {
+    alert('Calculation failed: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>

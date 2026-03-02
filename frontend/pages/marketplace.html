@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Marketplace — CarbonX</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/dashboard" class="nav-brand">🌍 CarbonX</a>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/buyer">Submit Emission</a>
+    <a href="/seller">My Projects</a>
+    <a href="#" onclick="logout();return false">Logout</a>
+  </div>
+</nav>
+
+<div style="max-width:1100px;margin:2rem auto;padding:0 1rem">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+    <div>
+      <h1 style="font-size:1.6rem;margin-bottom:.2rem">💹 Carbon Credit Marketplace</h1>
+      <p style="color:var(--muted);font-size:.88rem">
+        Verified projects | IPCC 2006 + 2019 Refinement | Prices in USD per t CO₂e
+      </p>
+    </div>
+    <a href="/seller" class="btn btn-green">+ List Your Credits</a>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="form-group">
+      <label>Project Type</label>
+      <select id="fType">
+        <option value="">All Types</option>
+        <option value="forestry">Forestry / REDD+</option>
+        <option value="renewable">Renewable Energy</option>
+        <option value="methane">Methane Capture</option>
+        <option value="efficiency">Energy Efficiency</option>
+        <option value="blue_carbon">Blue Carbon</option>
+        <option value="dac">Direct Air Capture</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Min Price (USD)</label>
+      <input type="number" id="fMinPrice" min="0" placeholder="0">
+    </div>
+    <div class="form-group">
+      <label>Max Price (USD)</label>
+      <input type="number" id="fMaxPrice" min="0" placeholder="999">
+    </div>
+    <div class="form-group">
+      <label>Vintage Year</label>
+      <input type="number" id="fVintage" min="2000" max="2100" placeholder="e.g. 2024">
+    </div>
+    <button class="btn btn-primary" onclick="loadMarket()">🔍 Filter</button>
+    <button class="btn btn-outline" style="border-color:var(--border);color:var(--text)"
+            onclick="resetFilters()">Reset</button>
+  </div>
+
+  <!-- Results count -->
+  <div style="font-size:.85rem;color:var(--muted);margin-bottom:1rem" id="resultCount">
+    Loading listings...
+  </div>
+
+  <!-- Grid -->
+  <div class="marketplace-grid" id="marketGrid">
+    <!-- Cards rendered by JS -->
+  </div>
+</div>
+
+<!-- Trade Modal -->
+<div id="tradeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+     z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:var(--radius);padding:2rem;
+              max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <h2 style="margin-bottom:.3rem" id="modalTitle">Purchase Credits</h2>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:1.5rem" id="modalOrg"></p>
+    <div class="form-group">
+      <label>Credits to Purchase (t CO₂e) *</label>
+      <input type="number" id="tradeCredits" min="0.01" step="0.01" placeholder="e.g. 100">
+    </div>
+    <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:.88rem">
+      <div>Price per credit: <strong id="modalPrice">—</strong></div>
+      <div style="margin-top:.3rem">Total value: <strong id="modalTotal" style="color:var(--green)">—</strong></div>
+    </div>
+    <div id="tradeAlert"></div>
+    <div style="display:flex;gap:.8rem">
+      <button class="btn btn-primary" style="flex:2" onclick="executeTrade()" id="tradeBtn">
+        Confirm Purchase
+      </button>
+      <button class="btn btn-outline" style="border-color:var(--border);color:var(--text);flex:1"
+              onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="globalToast"></div>
+
+<script src="/js/api.js"></script>
+<script>
+if (!requireAuth()) void 0;
+
+const TYPE_ICONS = {
+  forestry:'🌳', renewable:'☀️', methane:'🔥', efficiency:'⚡',
+  blue_carbon:'🌊', dac:'🏭', soil_carbon:'🌱', cookstove:'🍳'
+};
+
+let currentProject = null;
+
+async function loadMarket() {
+  const params = {
+    project_type: document.getElementById('fType').value,
+    min_price:    document.getElementById('fMinPrice').value,
+    max_price:    document.getElementById('fMaxPrice').value,
+    vintage:      document.getElementById('fVintage').value,
+  };
+  try {
+    const listings = await api.marketplace(params);
+    renderCards(listings.length ? listings : getDemoListings());
+  } catch {
+    renderCards(getDemoListings());
+  }
+}
+
+function renderCards(listings) {
+  document.getElementById('resultCount').textContent =
+    `${listings.length} listing${listings.length !== 1 ? 's' : ''} found`;
+  const grid = document.getElementById('marketGrid');
+  if (!listings.length) {
+    grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1">No listings match your criteria.</p>';
+    return;
+  }
+  grid.innerHTML = listings.map(p => `
+    <div class="credit-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <h3>${TYPE_ICONS[p.project_type] || '🌿'} ${p.project_name}</h3>
+        <span class="tag" style="background:var(--green);color:#fff">${p.status || 'active'}</span>
+      </div>
+      <div class="price">$${parseFloat(p.price_per_credit).toFixed(2)}<span style="font-size:.9rem;font-weight:400;color:var(--muted)">/t CO₂e</span></div>
+      <div class="meta">
+        <span>📍 ${p.country || '—'}, ${p.state || '—'}</span>
+        <span>🏢 ${p.organisation_name || '—'}</span>
+        <span>📅 Vintage: ${p.vintage_start}–${p.vintage_end}</span>
+        <span>📐 Methodology: ${p.methodology || '—'}</span>
+      </div>
+      <div style="margin:.8rem 0;display:flex;gap:.4rem;flex-wrap:wrap">
+        <span class="tag">${(p.project_type||'').replace('_',' ')}</span>
+        <span class="tag" style="color:var(--green)">${parseFloat(p.credits_available||0).toLocaleString()} t available</span>
+      </div>
+      <button class="btn btn-green" style="width:100%" onclick='openModal(${JSON.stringify(p)})'>
+        💳 Purchase Credits
+      </button>
+    </div>
+  `).join('');
+}
+
+function openModal(project) {
+  currentProject = project;
+  document.getElementById('modalTitle').textContent   = project.project_name;
+  document.getElementById('modalOrg').textContent     = `${project.organisation_name} | ${project.project_type}`;
+  document.getElementById('modalPrice').textContent   = `$${parseFloat(project.price_per_credit).toFixed(2)}`;
+  document.getElementById('tradeCredits').value       = '';
+  document.getElementById('modalTotal').textContent   = '—';
+  document.getElementById('tradeAlert').innerHTML     = '';
+  document.getElementById('tradeModal').style.display = 'flex';
+}
+
+document.getElementById('tradeCredits').addEventListener('input', function() {
+  if (!currentProject) return;
+  const credits = parseFloat(this.value) || 0;
+  const total   = credits * parseFloat(currentProject.price_per_credit);
+  document.getElementById('modalTotal').textContent = `$${total.toFixed(2)} USD`;
+});
+
+async function executeTrade() {
+  const credits = parseFloat(document.getElementById('tradeCredits').value);
+  if (!credits || credits <= 0) {
+    document.getElementById('tradeAlert').innerHTML =
+      '<div class="alert alert-error">Enter a valid credit amount</div>';
+    return;
+  }
+  const btn = document.getElementById('tradeBtn');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  try {
+    await api.trade({ project_id: currentProject.id, credits });
+    closeModal();
+    showToast(`✅ Purchased ${credits} t CO₂e credits!`, 'success');
+    loadMarket();
+  } catch(err) {
+    document.getElementById('tradeAlert').innerHTML =
+      `<div class="alert alert-error">❌ ${err.message}</div>`;
+  }
+  btn.innerHTML = 'Confirm Purchase';
+  btn.disabled = false;
+}
+
+function closeModal() { document.getElementById('tradeModal').style.display = 'none'; }
+function resetFilters() {
+  ['fType','fMinPrice','fMaxPrice','fVintage'].forEach(id => document.getElementById(id).value = '');
+  loadMarket();
+}
+
+function getDemoListings() {
+  return [
+    { id:'1', project_name:'Tamil Nadu Reforestation', project_type:'forestry',
+      methodology:'VCS VM0007', baseline_emission:50000, annual_reduction:18000,
+      credits_available:14580, price_per_credit:11.50, vintage_start:2022, vintage_end:2032,
+      organisation_name:'GreenEarth India', country:'India', state:'Tamil Nadu', status:'active' },
+    { id:'2', project_name:'Rajasthan Solar Farm', project_type:'renewable',
+      methodology:'Gold Standard GS4GG', baseline_emission:80000, annual_reduction:32000,
+      credits_available:28800, price_per_credit:8.25, vintage_start:2023, vintage_end:2033,
+      organisation_name:'SolarMax Ltd', country:'India', state:'Rajasthan', status:'active' },
+    { id:'3', project_name:'Maharashtra Biogas Capture', project_type:'methane',
+      methodology:'CDM ACM0010', baseline_emission:25000, annual_reduction:12000,
+      credits_available:10800, price_per_credit:14.00, vintage_start:2021, vintage_end:2031,
+      organisation_name:'BioEnergy Corp', country:'India', state:'Maharashtra', status:'active' },
+    { id:'4', project_name:'Kerala Mangrove Restoration', project_type:'blue_carbon',
+      methodology:'Verra VM0033', baseline_emission:15000, annual_reduction:8500,
+      credits_available:7650, price_per_credit:18.50, vintage_start:2022, vintage_end:2042,
+      organisation_name:'Blue Planet Foundation', country:'India', state:'Kerala', status:'active' },
+    { id:'5', project_name:'Gujarat Wind Energy', project_type:'renewable',
+      methodology:'Gold Standard V2', baseline_emission:60000, annual_reduction:24000,
+      credits_available:21600, price_per_credit:7.80, vintage_start:2023, vintage_end:2033,
+      organisation_name:'WindForce Pvt Ltd', country:'India', state:'Gujarat', status:'active' },
+  ];
+}
+
+loadMarket();
+</script>
+</body>
+</html>
