@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emission Report — CarbonLedger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0a0f0a;
+        --leaf: #1a7a3c;
+        --lime: #a8e63d;
+        --mist: #e8f0e9;
+        --wire: #d0dbd1;
+        --data: #2dd4a0;
+        --alert: #e85d3a;
+        --panel: #111811;
+        --border: rgba(255, 255, 255, 0.1);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "DM Mono", monospace;
+        background: var(--ink);
+        color: var(--mist);
+        min-height: 100vh;
+      }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 220px;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+        z-index: 20;
+      }
+      .sidebar-logo {
+        padding: 1.5rem;
+        font-family: "Syne", sans-serif;
+        font-weight: 800;
+        font-size: 1rem;
+        color: var(--lime);
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar-logo span {
+        color: var(--mist);
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.7rem 1.5rem;
+        font-size: 0.78rem;
+        color: var(--wire);
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+      .nav-item:hover,
+      .nav-item.active {
+        color: var(--lime);
+      }
+      .nav-item.active {
+        border-left: 2px solid var(--lime);
+        background: rgba(168, 230, 61, 0.04);
+      }
+      .nav-section {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.62rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.25);
+        margin-top: 0.5rem;
+      }
+      .main {
+        margin-left: 220px;
+        padding: 2rem;
+        max-width: 900px;
+      }
+      h1 {
+        font-family: "Syne", sans-serif;
+        font-weight: 800;
+        font-size: 1.4rem;
+        margin-bottom: 0.3rem;
+      }
+      .page-sub {
+        font-size: 0.78rem;
+        color: var(--wire);
+        margin-bottom: 2rem;
+      }
+      .section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        margin-bottom: 1.5rem;
+      }
+      .section-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .section-icon {
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+      }
+      .scope1 .section-icon {
+        background: rgba(232, 93, 58, 0.15);
+      }
+      .scope2 .section-icon {
+        background: rgba(255, 160, 64, 0.15);
+      }
+      .scope3 .section-icon {
+        background: rgba(45, 212, 160, 0.15);
+      }
+      .section-title {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .section-sub {
+        font-size: 0.7rem;
+        color: var(--wire);
+      }
+      .section-body {
+        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .field {
+        margin: 0;
+      }
+      .field.full {
+        grid-column: 1/-1;
+      }
+      label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--wire);
+        margin-bottom: 0.35rem;
+      }
+      input,
+      select {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        color: var(--mist);
+        padding: 0.7rem;
+        font-family: "DM Mono", monospace;
+        font-size: 0.82rem;
+        outline: none;
+        transition: border-color 0.2s;
+        appearance: none;
+      }
+      input:focus,
+      select:focus {
+        border-color: var(--lime);
+      }
+      select option {
+        background: #111811;
+      }
+      .submit-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
+      .btn-primary {
+        background: var(--lime);
+        color: var(--ink);
+        border: none;
+        padding: 0.9rem 2rem;
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-primary:hover {
+        background: var(--data);
+      }
+      .result-panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        display: none;
+      }
+      .result-panel.show {
+        display: block;
+      }
+      .result-title {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--lime);
+      }
+      .result-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--border);
+      }
+      .result-cell {
+        background: var(--panel);
+        padding: 1rem;
+        text-align: center;
+      }
+      .result-num {
+        font-family: "Syne", sans-serif;
+        font-weight: 800;
+        font-size: 1.4rem;
+        color: var(--lime);
+      }
+      .result-label {
+        font-size: 0.68rem;
+        color: var(--wire);
+        margin-top: 0.2rem;
+      }
+      .gas-table {
+        margin-top: 1.5rem;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+      }
+      .gas-table th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--wire);
+        border-bottom: 1px solid var(--border);
+      }
+      .gas-table td {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+      .compliance {
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+        margin-top: 1rem;
+        font-size: 0.68rem;
+        color: var(--wire);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="sidebar-logo">◈ <span>Carbon</span>Ledger</div>
+      <div class="nav-section">Monitor</div>
+      <a href="/dashboard" class="nav-item">◎ Dashboard</a>
+      <a href="/buyer" class="nav-item active">⚗️ Emission Report</a>
+      <div class="nav-section">Exchange</div>
+      <a href="/marketplace" class="nav-item">🔄 Marketplace</a>
+      <a href="/seller" class="nav-item">🌱 Seller Projects</a>
+    </aside>
+
+    <main class="main">
+      <h1>Emission Report</h1>
+      <div class="page-sub">
+        IPCC Tier 1 · Activity × EF · GWP-100 AR5 · Scope 1 + 2 + 3
+      </div>
+
+      <!-- SECTION A: Org Details -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">🏭</div>
+          <div>
+            <div class="section-title">Section A — Organisation Details</div>
+            <div class="section-sub">Reporting period and industry type</div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Reporting Year</label>
+            <input type="number" id="year" value="2024" min="2000" max="2099" />
+          </div>
+          <div class="field">
+            <label>Industry Type</label>
+            <select id="industry_type">
+              <option value="cement">Cement</option>
+              <option value="textile">Textile</option>
+              <option value="power_plant">Power Plant</option>
+              <option value="steel">Steel</option>
+              <option value="chemical">Chemical</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCOPE 1 -->
+      <div class="section scope1">
+        <div class="section-header">
+          <div class="section-icon">🔥</div>
+          <div>
+            <div class="section-title">Scope 1 — Direct Emissions</div>
+            <div class="section-sub">
+              Fuel combustion · IPCC 2006 Vol.2 Tier 1 · Formula: Emission =
+              Fuel × EF
+            </div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Fuel Type</label>
+            <select id="s1_fuel_type">
+              <option value="coal">Coal</option>
+              <option value="diesel">Diesel</option>
+              <option value="natural_gas">Natural Gas</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Manufacturing Scale</label>
+            <select id="s1_mfg_cat">
+              <option value="heavy">Heavy</option>
+              <option value="medium">Medium</option>
+              <option value="small">Small</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fuel Unit</label>
+            <select id="s1_fuel_unit">
+              <option value="tonnes">Tonnes</option>
+              <option value="litres">Litres</option>
+              <option value="m3">m³</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fuel Quantity</label>
+            <input
+              type="number"
+              id="s1_fuel_qty"
+              placeholder="e.g. 1000"
+              min="0"
+            />
+          </div>
+          <div class="field">
+            <label>Number of Factories</label>
+            <input type="number" id="s1_factories" value="1" min="1" />
+          </div>
+        </div>
+      </div>
+
+      <!-- SCOPE 2 -->
+      <div class="section scope2">
+        <div class="section-header">
+          <div class="section-icon">⚡</div>
+          <div>
+            <div class="section-title">Scope 2 — Purchased Electricity</div>
+            <div class="section-sub">
+              Indirect emissions · Formula: CO₂e = kWh × Grid EF (kg/kWh) ÷ 1000
+            </div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Electricity Consumed (kWh/year)</label>
+            <input
+              type="number"
+              id="s2_kwh"
+              placeholder="e.g. 500000"
+              min="0"
+            />
+          </div>
+          <div class="field">
+            <label>Grid EF (kg CO₂/kWh) — optional</label>
+            <input
+              type="number"
+              id="s2_grid_ef"
+              value="0.475"
+              step="0.001"
+              min="0"
+              placeholder="0.475 = global avg"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- SCOPE 3 -->
+      <div class="section scope3">
+        <div class="section-header">
+          <div class="section-icon">🚛</div>
+          <div>
+            <div class="section-title">Scope 3 — Value Chain</div>
+            <div class="section-sub">
+              Transport + Waste · Simplified Tier 1 · All values in tCO₂e
+            </div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Transport Emissions (tCO₂e/year)</label>
+            <input
+              type="number"
+              id="s3_transport"
+              placeholder="e.g. 120.5"
+              min="0"
+            />
+          </div>
+          <div class="field">
+            <label>Waste Generated (kg/year)</label>
+            <input
+              type="number"
+              id="s3_waste"
+              placeholder="e.g. 50000"
+              min="0"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section C: Credits Required -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-icon">📋</div>
+          <div>
+            <div class="section-title">Section C — Credit Requirement</div>
+            <div class="section-sub">
+              Credits Required = Total Emission − Total Absorption
+            </div>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="field">
+            <label>Existing Absorption (tCO₂/year)</label>
+            <input
+              type="number"
+              id="existing_abs"
+              placeholder="e.g. 500"
+              min="0"
+              value="0"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-row">
+        <button class="btn-primary" onclick="submitEmission()">
+          ⚗️ Calculate Emissions →
+        </button>
+      </div>
+
+      <!-- RESULT PANEL -->
+      <div class="result-panel" id="resultPanel">
+        <div class="result-title">📊 Emission Calculation Result</div>
+        <div class="result-grid">
+          <div class="result-cell">
+            <div class="result-num" id="r-emit">—</div>
+            <div class="result-label">Total Emission (tCO₂e/yr)</div>
+          </div>
+          <div class="result-cell">
+            <div class="result-num" id="r-abs">—</div>
+            <div class="result-label">Absorption (tCO₂e/yr)</div>
+          </div>
+          <div class="result-cell">
+            <div class="result-num" id="r-credits">—</div>
+            <div class="result-label">Credits Required</div>
+          </div>
+        </div>
+
+        <table class="gas-table" style="margin-top: 1.5rem">
+          <thead>
+            <tr>
+              <th>Gas</th>
+              <th>Raw Tonnes/yr</th>
+              <th>GWP-100</th>
+              <th>CO₂e Contribution</th>
+            </tr>
+          </thead>
+          <tbody id="gasTableBody"></tbody>
+        </table>
+
+        <div class="compliance">
+          <strong style="color: var(--lime)">📚 Scientific References</strong
+          ><br />
+          [1] IPCC 2006 Guidelines for National GHG Inventories — Vol.2
+          (Energy), Vol.3 (IPPU)<br />
+          [2] 2019 Refinement to the 2006 IPCC Guidelines<br />
+          [3] GWP-100 AR5 (IPCC 2013, Table 8.A.1): CO₂=1 · CH₄=28 · N₂O=265 ·
+          HFC-134a=1300 · SF₆=23500<br />
+          [4] Tier 1 Activity × Emission Factor methodology<br />
+          [5] Scope 2: IEA 2023 global average grid EF = 0.475 kg CO₂/kWh
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (!user.id) window.location.href = "/login";
+      const token = localStorage.getItem("accessToken");
+
+      const GWP = { CO2: 1, CH4: 28, N2O: 265, "HFC-134a": 1300, SF6: 23500 };
+
+      async function submitEmission() {
+        const payload = {
+          year: parseInt(document.getElementById("year").value),
+          scope1: {
+            fuel_type: document.getElementById("s1_fuel_type").value,
+            fuel_unit: document.getElementById("s1_fuel_unit").value,
+            fuel_quantity:
+              parseFloat(document.getElementById("s1_fuel_qty").value) || 0,
+            number_of_factories:
+              parseInt(document.getElementById("s1_factories").value) || 1,
+            industry_type: document.getElementById("industry_type").value,
+            manufacturing_category: document.getElementById("s1_mfg_cat").value,
+          },
+          scope2: {
+            electricity_kwh:
+              parseFloat(document.getElementById("s2_kwh").value) || 0,
+            grid_emission_factor:
+              parseFloat(document.getElementById("s2_grid_ef").value) || 0.475,
+          },
+          scope3: {
+            transportation_co2e:
+              parseFloat(document.getElementById("s3_transport").value) || 0,
+            waste_co2e:
+              parseFloat(document.getElementById("s3_waste").value) || 0,
+          },
+        };
+
+        try {
+          const res = await fetch("/carbon/emission/calculate", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + token,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          showResult(data);
+        } catch (e) {
+          alert("Calculation failed: " + e.message);
+        }
+      }
+
+      function showResult(data) {
+        const emit = data.total_emission_co2e || 0;
+        const abs =
+          parseFloat(document.getElementById("existing_abs").value) || 0;
+        const credits = Math.max(0, emit - abs);
+
+        document.getElementById("r-emit").textContent = emit.toLocaleString(
+          undefined,
+          { maximumFractionDigits: 2 },
+        );
+        document.getElementById("r-abs").textContent = abs.toLocaleString(
+          undefined,
+          { maximumFractionDigits: 2 },
+        );
+        document.getElementById("r-credits").textContent =
+          credits.toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+        const gwt = data.gas_wise_totals || {};
+        const gasOrder = [
+          ["CO2", "CO₂"],
+          ["CH4", "CH₄"],
+          ["N2O", "N₂O"],
+          ["HFC-134a", "HFC-134a"],
+          ["SF6", "SF₆"],
+        ];
+        let rows = "";
+        gasOrder.forEach(([key, label]) => {
+          const raw = gwt[key] || 0;
+          const gwp = GWP[key] || 1;
+          const co2e = raw * gwp;
+          rows += `<tr>
+      <td>${label}</td>
+      <td>${raw.toFixed(6)}</td>
+      <td>${gwp.toLocaleString()}</td>
+      <td>${co2e.toFixed(4)}</td>
+    </tr>`;
+        });
+        document.getElementById("gasTableBody").innerHTML = rows;
+        document.getElementById("resultPanel").classList.add("show");
+        document
+          .getElementById("resultPanel")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+    </script>
+  </body>
+</html>
