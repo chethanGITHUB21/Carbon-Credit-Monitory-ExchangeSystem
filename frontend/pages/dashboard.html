@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard — CarbonX</title>
     <link rel="stylesheet" href="/css/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ol@v10.1.0/ol.css"
+    />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.1.0/dist/ol.js"></script>
   </head>
   <body>
     <div class="dashboard-layout">
@@ -99,6 +104,47 @@
             Reset
           </button>
         </div>
+        <div id="MapBody">
+          <!-- OpenLayer Map with emission wise filters and yearly emission progress bar  -->
+          <div class="control-panel">
+            <h3>Emission Type</h3>
+            <button onclick="changeEmission('co2_emission')">CO2</button>
+            <button onclick="changeEmission('co_emission')">CO</button>
+            <button onclick="changeEmission('ch4_emission')">CH4</button>
+            <button onclick="changeEmission('thermal_emission')">
+              Thermal
+            </button>
+            <button onclick="changeEmission('vehicle_emission')">
+              Vehicle
+            </button>
+            <button onclick="changeEmission('forest_emission')">Forest</button>
+
+            <h3>Emission Level</h3>
+            <button onclick="changeLevel('low')">Low</button>
+            <button onclick="changeLevel('medium')">Medium</button>
+            <button onclick="changeLevel('high')">High</button>
+            <button onclick="resetLevel()">Reset Level</button>
+          </div>
+
+          <!-- MAP -->
+          <div id="map"></div>
+
+          <!-- INFO PANEL -->
+          <div id="info-panel">Click on a district</div>
+
+          <!-- TIME SLIDER -->
+          <div class="time-container">
+            <input type="range" id="timeSlider" min="0" max="5" />
+            <div class="year-scale">
+              <span>2020</span>
+              <span>2021</span>
+              <span>2022</span>
+              <span>2023</span>
+              <span>2024</span>
+              <span>2025</span>
+            </div>
+          </div>
+        </div>
 
         <!-- Charts -->
         <div class="charts-row">
@@ -175,6 +221,7 @@
     </div>
 
     <script src="/js/api.js"></script>
+    <script src="../js/index.js"></script>
     <script>
       // ── Auth guard ──────────────────────────────────────────────
       if (!requireAuth()) void 0;

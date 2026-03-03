@@ -362,7 +362,7 @@ body {
 .charts-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 .chart-card {
@@ -618,6 +618,99 @@ tr:hover td {
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
+#MapBody {
+  position: relative;
+  display: grid;
+  grid-template-columns: 220px 1fr 230px;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "controls map info"
+    "controls timeline timeline";
+  gap: 0.7rem;
+  height: 600px;
+  margin: 0 0 1.5rem;
+  padding: 0.7rem;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+/* MAP */
+#map {
+  grid-area: map;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+/* LEFT CONTROL PANEL */
+.control-panel {
+  grid-area: controls;
+  background: #f4f4f4;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  overflow-y: auto;
+}
+
+.control-panel h3 {
+  font-size: 0.88rem;
+  margin: 0.3rem 0 0.45rem;
+}
+
+.control-panel button {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 6px;
+  border: none;
+  background: #1976d2;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.control-panel button:hover {
+  background: #0d47a1;
+}
+
+/* INFO PANEL (RIGHT SIDE) */
+#info-panel {
+  grid-area: info;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px var(--border);
+  min-width: 0;
+  max-height: 100%;
+  overflow: auto;
+  font-size: 0.82rem;
+}
+
+/* TIME SLIDER CONTAINER */
+.time-container {
+  grid-area: timeline;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+#timeSlider {
+  width: 100%;
+}
+
+/* Year Scale */
+.year-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-top: 4px;
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -634,6 +727,19 @@ tr:hover td {
   }
   .charts-row {
     grid-template-columns: 1fr;
+  }
+  #MapBody {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 180px auto auto;
+    grid-template-areas:
+      "controls"
+      "map"
+      "info"
+      "timeline";
+    height: auto;
+  }
+  .control-panel {
+    max-height: 180px;
   }
   .hero h1 {
     font-size: 2rem;
