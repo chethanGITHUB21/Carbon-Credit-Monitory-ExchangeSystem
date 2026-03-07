@@ -12,7 +12,7 @@ const wmsLayer = new ol.layer.Image({
   source: new ol.source.ImageWMS({
     url: "http://localhost:8080/geoserver/wms",
     params: {
-      LAYERS: "carbonGEO:post_district_emission",
+      LAYERS: "carbonGEO:district_table",
     },
     serverType: "geoserver",
     crossOrigin: "anonymous",
@@ -88,7 +88,6 @@ window.changeLevel = function (level) {
   });
 };
 
-
 window.resetLevel = function () {
   const source = wmsLayer.getSource();
 
@@ -102,7 +101,7 @@ window.resetLevel = function () {
 // FEATURE INFO (Click Popup)
 // ===============================
 function classifyEmission(value) {
-  if (value >= 0.00 && value < 0.33) {
+  if (value >= 0.0 && value < 0.33) {
     return "Low";
   } else if (value >= 0.33 && value < 0.66) {
     return "Medium";
@@ -323,4 +322,3 @@ function tryAddFeature(line) {
 
 // start automatically - stop or call on user action if desired
 startStream();
-

@@ -79,20 +79,24 @@
           <label style="font-weight: 600; font-size: 0.85rem"
             >Filter by Region:</label
           >
-          <select id="filterCountry" onchange="onRegionChange()">
+
+          <select id="filterCountry" onchange="onCountryChange()">
             <option value="">All Countries</option>
-            <option>India</option>
-            <option>China</option>
-            <option>USA</option>
-            <option>Germany</option>
-            <option>Brazil</option>
+            <option value="India">India</option>
+            <option value="China">China</option>
+            <option value="USA">USA</option>
+            <option value="Germany">Germany</option>
+            <option value="Brazil">Brazil</option>
           </select>
-          <select id="filterState" onchange="onRegionChange()">
+
+          <select id="filterState" onchange="onStateChange()">
             <option value="">All States</option>
           </select>
-          <select id="filterDistrict" onchange="onRegionChange()">
+
+          <select id="filterDistrict">
             <option value="">All Districts</option>
           </select>
+
           <button class="btn btn-primary" onclick="loadDashboard()">
             Apply
           </button>
@@ -492,35 +496,88 @@
         document.getElementById("barTable").classList.add("visible");
       }
 
-      // ── Region cascades ──────────────────────────────────────────
-      function onRegionChange() {
+      // ── All India States Data ─────────────────────────────────────
+      const INDIA_STATES = [
+        "Andaman & Nicobar Island",
+        "Andhra Pradesh",
+        "Arunachal Pradesh",
+        "Assam",
+        "Bihar",
+        "Chandigarh",
+        "Chhattisgarh",
+        "Dadra & Nagar Haveli",
+        "Daman & Diu",
+        "Goa",
+        "Gujarat",
+        "Haryana",
+        "Himachal Pradesh",
+        "Jammu & Kashmir",
+        "Jharkhand",
+        "Karnataka",
+        "Kerala",
+        "Lakshadweep",
+        "Madhya Pradesh",
+        "Maharashtra",
+        "Manipur",
+        "Meghalaya",
+        "Mizoram",
+        "Nagaland",
+        "NCT Of Delhi",
+        "Odisha",
+        "Puducherry",
+        "Punjab",
+        "Rajasthan",
+        "Sikkim",
+        "Tamil Nadu",
+        "Telangana",
+        "Tripura",
+        "Uttar Pradesh",
+        "Uttarakhand",
+        "West Bengal",
+      ];
+
+      // ── Region Cascades ───────────────────────────────────────────
+      function onCountryChange() {
         const country = document.getElementById("filterCountry").value;
         const stateEl = document.getElementById("filterState");
         const distEl = document.getElementById("filterDistrict");
 
-        // In production: fetch states from API based on country
+        // Reset both dropdowns
         stateEl.innerHTML = '<option value="">All States</option>';
         distEl.innerHTML = '<option value="">All Districts</option>';
 
         if (country === "India") {
-          [
-            "Tamil Nadu",
-            "Maharashtra",
-            "Karnataka",
-            "Delhi",
-            "West Bengal",
-            "Gujarat",
-          ].forEach((s) => {
-            const o = new Option(s, s);
-            stateEl.appendChild(o);
-          });
+          INDIA_STATES.forEach((s) => stateEl.appendChild(new Option(s, s)));
         }
+        // Add else-if blocks here for China, USA etc. when ready
+      }
+
+      function onStateChange() {
+        const state = document.getElementById("filterState").value;
+        const country = document.getElementById("filterCountry").value;
+        const distEl = document.getElementById("filterDistrict");
+
+        distEl.innerHTML = '<option value="">All Districts</option>';
+
+        if (!state) return;
+
+        // Fetch districts from backend with auth header via central API client
+        api
+          .districts({ state, country })
+          .then((districts) => {
+            districts.forEach((d) => {
+              distEl.appendChild(new Option(d.name, d.name));
+            });
+          })
+          .catch((err) => console.error("Failed to load districts:", err));
       }
 
       function resetFilters() {
         ["filterCountry", "filterState", "filterDistrict"].forEach((id) => {
           document.getElementById(id).value = "";
         });
+        // Also clear the state/district options
+        onCountryChange();
         loadDashboard();
       }
 

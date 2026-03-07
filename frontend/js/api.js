@@ -46,6 +46,8 @@ const api = {
       "GET",
       "/api/carbon/dashboard/region?" + new URLSearchParams(params),
     ),
+  districts: (params) =>
+    api._fetch("GET", "/api/carbon/districts?" + new URLSearchParams(params)),
   marketplace: (params) =>
     api._fetch("GET", "/api/carbon/marketplace?" + new URLSearchParams(params)),
   trade: (body) => api._fetch("POST", "/api/carbon/trade", body),

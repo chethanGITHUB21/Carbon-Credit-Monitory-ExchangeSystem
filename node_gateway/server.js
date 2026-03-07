@@ -33,6 +33,9 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 // ── API Routes ────────────────────────────────────────────────
 app.use("/auth", authLimiter, authRoutes);
 app.use("/carbon", carbonRoutes);
+// Backward-compatible aliases for frontend calls that use /api/*
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/carbon", carbonRoutes);
 
 // ── Frontend page routes ──────────────────────────────────────
 const frontendPages = [

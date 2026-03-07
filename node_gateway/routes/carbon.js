@@ -155,6 +155,38 @@ router.get("/dashboard/region", authenticate, async (req, res) => {
   }
 });
 
+// ── GET /carbon/districts ──────────────────────────────────────
+router.get("/districts", authenticate, async (req, res) => {
+  const { state, country } = req.query;
+  if (!state || !state.trim()) {
+    return res.status(400).json({ error: "state query param is required" });
+  }
+
+  try {
+    const vals = [state.trim()];
+    let where = "WHERE state = $1";
+    if (country && country.trim()) {
+      vals.push(country.trim());
+      where += " AND country = $2";
+    }
+
+    const result = await pool.query(
+      `SELECT DISTINCT district AS name
+       FROM users
+       ${where}
+       AND district IS NOT NULL
+       AND TRIM(district) <> ''
+       ORDER BY district ASC`,
+      vals,
+    );
+
+    return res.json(result.rows);
+  } catch (err) {
+    console.error("District list error:", err.message);
+    return res.status(500).json({ error: "Failed to load districts" });
+  }
+});
+
 // ── GET /carbon/marketplace ───────────────────────────────────
 router.get("/marketplace", authenticate, async (req, res) => {
   const { project_type, min_price, max_price, vintage, country } = req.query;
