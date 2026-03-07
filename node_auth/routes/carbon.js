@@ -124,13 +124,75 @@ router.get("/dashboard/summary", auth, async (req, res) => {
 
 // ── GET /carbon/dashboard/region ───────────────────────────
 router.get("/dashboard/region", auth, async (req, res) => {
+  const { country, state, district } = req.query;
   try {
+    const cleanParams = Object.fromEntries(
+      Object.entries({ country, state, district }).filter(
+        ([_, v]) => v && String(v).trim() !== "",
+      ),
+    );
     const fastapiRes = await axios.get(`${FASTAPI}/api/v1/dashboard/region`, {
-      params: req.query,
+      params: cleanParams,
     });
     res.json(fastapiRes.data);
   } catch (err) {
-    res.status(500).json({ error: "Region data failed" });
+    // Fallback to local DB views if FastAPI is unavailable/fails.
+    try {
+      let view = "vw_country_summary";
+      let whereClause = "";
+      const values = [];
+
+      if (country && state && district) {
+        view = "vw_district_summary";
+        whereClause = "WHERE country=$1 AND state=$2 AND district=$3";
+        values.push(country, state, district);
+      } else if (country && state) {
+        view = "vw_state_summary";
+        whereClause = "WHERE country=$1 AND state=$2";
+        values.push(country, state);
+      } else if (country) {
+        whereClause = "WHERE country=$1";
+        values.push(country);
+      }
+
+      const result = await pool.query(
+        `SELECT * FROM ${view} ${whereClause}`,
+        values,
+      );
+      return res.json(result.rows);
+    } catch (dbErr) {
+      return res.status(500).json({ error: "Region data failed" });
+    }
+  }
+});
+
+// ── GET /carbon/districts ──────────────────────────────────────
+router.get("/districts", auth, async (req, res) => {
+  const { state, country } = req.query;
+  if (!state || !String(state).trim()) {
+    return res.status(400).json({ error: "state query param is required" });
+  }
+
+  try {
+    const vals = [String(state).trim()];
+    let where = "WHERE state = $1";
+    if (country && String(country).trim()) {
+      vals.push(String(country).trim());
+      where += " AND country = $2";
+    }
+
+    const result = await pool.query(
+      `SELECT DISTINCT district AS name
+       FROM users
+       ${where}
+       AND district IS NOT NULL
+       AND TRIM(district) <> ''
+       ORDER BY district ASC`,
+      vals,
+    );
+    return res.json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to load districts" });
   }
 });
 
