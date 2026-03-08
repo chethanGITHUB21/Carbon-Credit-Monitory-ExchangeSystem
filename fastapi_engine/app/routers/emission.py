@@ -186,11 +186,7 @@ async def dashboard_summary(
     country: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     district: Optional[str] = Query(None),
-):
-    logger = logging.getLogger("uvicorn.error")
-    logger.setLevel(logging.DEBUG)   
-    
-    logger.debug("DEBUG REQUEST: %s",country,state,district)
+):    
     
     """
     Returns yearly trend data for line graph.

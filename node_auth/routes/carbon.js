@@ -38,7 +38,7 @@ router.post("/emission/calculate", auth, async (req, res) => {
 
     const data = fastapiRes.data;
 
-    // Upsert buyer_profile for this user + year
+    // Insert buyer_profile for this user + year
     const bpResult = await pool.query(
       `INSERT INTO buyer_profiles (user_id, reporting_year, industry_type)
        VALUES ($1, $2, $3)
@@ -111,14 +111,109 @@ router.post("/seller/calculate", auth, async (req, res) => {
 
 // ── GET /carbon/dashboard/summary ──────────────────────────
 router.get("/dashboard/summary", auth, async (req, res) => {
+  const { country, state, district } = req.query;
   try {
-    const fastapiRes = await axios.get(`${FASTAPI}/api/v1/dashboard/summary`, {
-      params: { user_id: req.user.id },
+    const filters = [];
+    const values = [];
+    if (country && String(country).trim()) {
+      values.push(String(country).trim());
+      filters.push(`LOWER(TRIM(u.country)) = LOWER(TRIM($${values.length}))`);
+    }
+    if (state && String(state).trim()) {
+      values.push(String(state).trim());
+      filters.push(`LOWER(TRIM(u.state)) = LOWER(TRIM($${values.length}))`);
+    }
+    if (district && String(district).trim()) {
+      values.push(String(district).trim());
+      filters.push(`LOWER(TRIM(u.district)) = LOWER(TRIM($${values.length}))`);
+    }
+    const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+
+    const emissionRes = await pool.query(
+      `SELECT er.year::int AS year,
+              COALESCE(SUM(er.total_co2e), 0) AS emission_co2e,
+              COALESCE(SUM(er.total_absorption), 0) AS absorption_co2e
+       FROM emission_records er
+       JOIN buyer_profiles bp ON bp.id = er.buyer_id
+       JOIN users u ON u.id = bp.user_id
+       ${whereClause}
+       GROUP BY er.year
+       ORDER BY er.year`,
+      values,
+    );
+
+    const tradedRes = await pool.query(
+      `SELECT EXTRACT(YEAR FROM ct.trade_date)::int AS year,
+              COALESCE(SUM(ct.credits_traded), 0) AS credits_value
+       FROM carbon_transactions ct
+       JOIN users u ON u.id = ct.buyer_id
+       ${whereClause}
+       GROUP BY EXTRACT(YEAR FROM ct.trade_date)
+       ORDER BY year`,
+      values,
+    );
+
+    const vintageColRes = await pool.query(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = 'seller_projects'
+         AND column_name IN ('vintage', 'vintage_start')
+       ORDER BY CASE WHEN column_name = 'vintage' THEN 0 ELSE 1 END
+       LIMIT 1`,
+    );
+    const vintageCol = vintageColRes.rows[0]?.column_name;
+    const generatedRes = vintageCol
+      ? await pool.query(
+          `SELECT sp.${vintageCol}::int AS year,
+                  COALESCE(SUM(sp.credits_available), 0) AS credits_value
+           FROM seller_projects sp
+           JOIN users u ON u.id = sp.user_id
+           ${whereClause}
+           GROUP BY sp.${vintageCol}
+           ORDER BY sp.${vintageCol}`,
+          values,
+        )
+      : { rows: [] };
+
+    const creditsByYear = new Map();
+    tradedRes.rows.forEach((r) => {
+      creditsByYear.set(Number(r.year), Number(r.credits_value) || 0);
     });
-    console.log("DEBUG: " + req.user.id);
-    res.json(fastapiRes.data);
+    generatedRes.rows.forEach((r) => {
+      const y = Number(r.year);
+      const existing = creditsByYear.get(y) || 0;
+      creditsByYear.set(y, Math.max(existing, Number(r.credits_value) || 0));
+    });
+
+    const yearly_trend = emissionRes.rows.map((r) => ({
+      year: Number(r.year),
+      emission_co2e: Number(r.emission_co2e) || 0,
+      absorption_co2e: Number(r.absorption_co2e) || 0,
+      credits_traded: creditsByYear.get(Number(r.year)) || 0,
+    }));
+
+    const totals = yearly_trend.reduce(
+      (acc, row) => {
+        acc.emission += row.emission_co2e;
+        acc.absorption += row.absorption_co2e;
+        return acc;
+      },
+      { emission: 0, absorption: 0 },
+    );
+    const emissionBase = totals.emission || 1;
+
+    return res.json({
+      yearly_trend,
+      top_indicators: {
+        absorption_pct: (totals.absorption / emissionBase) * 100,
+        emission_pct: ((totals.emission - totals.absorption) / emissionBase) * 100,
+      },
+      unit: "t CO2e",
+    });
   } catch (err) {
-    res.status(500).json({ error: "Dashboard summary failed" });
+    console.error("Dashboard summary failed:", err.message);
+    return res.status(500).json({ error: "Dashboard summary failed" });
   }
 });
 
@@ -126,43 +221,65 @@ router.get("/dashboard/summary", auth, async (req, res) => {
 router.get("/dashboard/region", auth, async (req, res) => {
   const { country, state, district } = req.query;
   try {
-    const cleanParams = Object.fromEntries(
-      Object.entries({ country, state, district }).filter(
-        ([_, v]) => v && String(v).trim() !== "",
-      ),
-    );
-    const fastapiRes = await axios.get(`${FASTAPI}/api/v1/dashboard/region`, {
-      params: cleanParams,
-    });
-    res.json(fastapiRes.data);
-  } catch (err) {
-    // Fallback to local DB views if FastAPI is unavailable/fails.
-    try {
-      let view = "vw_country_summary";
-      let whereClause = "";
-      const values = [];
-
-      if (country && state && district) {
-        view = "vw_district_summary";
-        whereClause = "WHERE country=$1 AND state=$2 AND district=$3";
-        values.push(country, state, district);
-      } else if (country && state) {
-        view = "vw_state_summary";
-        whereClause = "WHERE country=$1 AND state=$2";
-        values.push(country, state);
-      } else if (country) {
-        whereClause = "WHERE country=$1";
-        values.push(country);
-      }
-
-      const result = await pool.query(
-        `SELECT * FROM ${view} ${whereClause}`,
-        values,
-      );
-      return res.json(result.rows);
-    } catch (dbErr) {
-      return res.status(500).json({ error: "Region data failed" });
+    const filters = [];
+    const values = [];
+    if (country && String(country).trim()) {
+      values.push(String(country).trim());
+      filters.push(`LOWER(TRIM(u.country)) = LOWER(TRIM($${values.length}))`);
     }
+    if (state && String(state).trim()) {
+      values.push(String(state).trim());
+      filters.push(`LOWER(TRIM(u.state)) = LOWER(TRIM($${values.length}))`);
+    }
+    if (district && String(district).trim()) {
+      values.push(String(district).trim());
+      filters.push(`LOWER(TRIM(u.district)) = LOWER(TRIM($${values.length}))`);
+    }
+    const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+
+    const resolution = district
+      ? "district"
+      : state
+        ? "district"
+        : country
+          ? "state"
+          : "country";
+    const groupExpr =
+      resolution === "country"
+        ? "u.country"
+        : resolution === "state"
+          ? "u.country, u.state"
+          : "u.country, u.state, u.district";
+
+    const result = await pool.query(
+      `SELECT u.country,
+              ${resolution === "country" ? "NULL::text AS state," : "u.state,"}
+              ${resolution === "district" ? "u.district," : "NULL::text AS district,"}
+              COALESCE(SUM(er.total_co2e), 0) AS total_emission_co2e,
+              COALESCE(SUM(er.total_absorption), 0) AS total_absorption_co2e
+       FROM emission_records er
+       JOIN buyer_profiles bp ON bp.id = er.buyer_id
+       JOIN users u ON u.id = bp.user_id
+       ${whereClause}
+       GROUP BY ${groupExpr}
+       ORDER BY total_emission_co2e DESC
+       LIMIT 100`,
+      values,
+    );
+
+    return res.json({
+      regions: result.rows.map((r) => ({
+        country: r.country,
+        state: r.state,
+        district: r.district,
+        total_emission_co2e: Number(r.total_emission_co2e) || 0,
+        total_absorption_co2e: Number(r.total_absorption_co2e) || 0,
+      })),
+      resolution,
+      unit: "t CO2e",
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Region data failed" });
   }
 });
 
